@@ -1,6 +1,8 @@
 package com.booksy.recommendationservice.services;
 
 import com.booksy.recommendationservice.models.Book;
+import com.booksy.recommendationservice.models.Event;
+import com.booksy.recommendationservice.models.UserInteraction;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recombee.api_client.RecombeeClient;
 import com.recombee.api_client.api_requests.AddItemProperty;
@@ -10,7 +12,9 @@ import com.recombee.api_client.api_requests.SetItemValues;
 import com.recombee.api_client.exceptions.ApiException;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -33,7 +37,6 @@ public class RecombeeService {
     }
 
     public String sendBook(Book book) throws ApiException {
-        System.out.println(token);
         addPropreties();
        return recombeeClient.send(createItemValues(book));
     }
@@ -63,6 +66,13 @@ public class RecombeeService {
         return new SetItemValues(book.getId(), booktMap).setCascadeCreate(true);
 
     }
+
+    @KafkaListener(topics="ap8dmjx0-recommendation-events", groupId = "ap8dmjx0-consumers")
+    public void sendUserRatingInteraction(Event domainEvent){
+        System.out.println(domainEvent.getDate());
+        System.out.println(domainEvent.getType());
+    }
+
 
 
 }
