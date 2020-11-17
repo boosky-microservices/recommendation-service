@@ -13,5 +13,5 @@ public class UserInteraction implements Payload {
     private String userId;
     private String bookId;
     private String recommId;
-    private int rating;
+    private double rating;
 }

@@ -12,5 +12,5 @@ public class Event {
 
     private String type;
     private String Date;
-    //private UserInteraction payload;
+    private UserInteraction payload;
 }

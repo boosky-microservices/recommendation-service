@@ -1,24 +1,23 @@
 package com.booksy.recommendationservice.services;
 
-import com.booksy.recommendationservice.models.Book;
-import com.booksy.recommendationservice.models.Event;
-import com.booksy.recommendationservice.models.UserInteraction;
+import com.booksy.recommendationservice.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recombee.api_client.RecombeeClient;
-import com.recombee.api_client.api_requests.AddItemProperty;
-import com.recombee.api_client.api_requests.Batch;
-import com.recombee.api_client.api_requests.Request;
-import com.recombee.api_client.api_requests.SetItemValues;
+import com.recombee.api_client.api_requests.*;
+import com.recombee.api_client.bindings.Recommendation;
+import com.recombee.api_client.bindings.RecommendationResponse;
 import com.recombee.api_client.exceptions.ApiException;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.apache.catalina.User;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @AllArgsConstructor
@@ -59,19 +58,63 @@ public class RecombeeService {
 
     public SetItemValues createItemValues(Book book) {
         String thumbnail = book.getThumbnail().equals("assets/img/no_book_cover.jpg") ? book.getThumbnail() : null;
+        book.setThumbnail(thumbnail);
         ObjectMapper oMapper = new ObjectMapper();
         Map<String, Object> booktMap = oMapper.convertValue(book, Map.class);
         booktMap.remove("id");
-
         return new SetItemValues(book.getId(), booktMap).setCascadeCreate(true);
 
     }
 
-    @KafkaListener(topics = "ap8dmjx0-recommendation-events", groupId = "ap8dmjx0-consumers")
-    public void sendUserRatingInteraction(Event domainEvent) {
-        System.out.println(domainEvent.getDate());
-        System.out.println(domainEvent.getType());
+    public void sendUserRatingInteraction(Event domainEvent) throws ApiException {
+        double rating = domainEvent.getPayload().getRating() / 2.5 - 1;
+        domainEvent.getPayload().setRating(rating);
+        ObjectMapper oMapper = new ObjectMapper();
+        Map<String, Object> userInteractiontMap = oMapper.convertValue(domainEvent.getPayload(), Map.class);
+        userInteractiontMap.remove("recommId");
+        SetItemValues userInteractionRequest = new SetItemValues(domainEvent.getPayload().getRecommId() , userInteractiontMap).setCascadeCreate(true);
+        recombeeClient.send(userInteractionRequest);
+
     }
 
+    public void sendInBulk(List<Book> books) throws ApiException{
+       recombeeClient.send(new Batch(books.stream().map(this::createItemValues).collect(Collectors.toList())));
+    }
+
+    public void deleteRatingInteraction( UserInteraction userInteraction) throws ApiException {
+        recombeeClient.send(new DeleteBookmark(userInteraction.getUserId(),userInteraction.getBookId()));
+    }
+
+    public void sendViewInteraction(UserInteraction userInteraction) throws ApiException{
+        recombeeClient.send(new AddDetailView(userInteraction.getUserId(),userInteraction.getBookId()));
+    }
+
+    public List<RecommendedBook> getRecommendedBooksToUser(String userId, String category, int count) throws ApiException{
+        List books = new ArrayList<RecommendedBook>();
+        final ObjectMapper mapper = new ObjectMapper();
+        RecommendationResponse recommendedBooks = recombeeClient.send(new RecommendItemsToUser(userId,count).setCascadeCreate(true).setReturnProperties(true));
+        for(Recommendation rec: recommendedBooks){
+            Book book = mapper.convertValue(rec.getValues(),Book.class);
+            RecommendedBook recommendedBook = new RecommendedBook(rec.getId(),book);
+            books.add(recommendedBook);
+        }
+        return books;
+    }
+
+    public List<RecommendedBook> getRecommendedBooksFromBook(String bookId, String userId, int count) throws ApiException{
+        List books = new ArrayList<RecommendedBook>();
+        final ObjectMapper mapper = new ObjectMapper();
+        RecommendationResponse recommendedBooks = recombeeClient.send(new RecommendItemsToItem(bookId,userId,count).setCascadeCreate(true).setReturnProperties(true));
+        for(Recommendation rec: recommendedBooks){
+            Book book = mapper.convertValue(rec.getValues(),Book.class);
+            RecommendedBook recommendedBook = new RecommendedBook(rec.getId(),book);
+            books.add(recommendedBook);
+        }
+        return books;
+    }
+
+    public void mergeUsers(String targetUserId, String sourceUserId) throws ApiException{
+        recombeeClient.send(new MergeUsers(targetUserId,sourceUserId).setCascadeCreate(true));
+    }
 
 }
