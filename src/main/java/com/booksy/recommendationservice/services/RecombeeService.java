@@ -45,7 +45,7 @@ public class RecombeeService {
         if (eventType.equals(EventTypes.UPDATE_BOOK_RATING.toString())) {
             sendUserRatingInteraction((UserInteraction) payload);
         }else if(eventType.equals(EventTypes.DELETE_BOOK_RATING.toString())) {
-            deleteRatingInteraction((UserInteraction) payload);
+            deleteRatingInteraction((DeleteInteraction) payload);
         }
     }
 
@@ -91,8 +91,12 @@ public class RecombeeService {
         recombeeClient.send(new Batch(books.stream().map(this::createItemValues).collect(Collectors.toList())));
     }
 
-    public void deleteRatingInteraction(UserInteraction userInteraction) throws ApiException {
-        recombeeClient.send(new DeleteBookmark(userInteraction.getUserId(), userInteraction.getBookId()));
+    public void deleteRatingInteraction(DeleteInteraction deleteInteraction) {
+        try {
+            recombeeClient.send(new DeleteBookmark(deleteInteraction.getUserId(), deleteInteraction.getBookId()));
+        } catch (ApiException e) {
+            e.printStackTrace();
+        }
     }
 
     public void sendViewInteraction(UserInteraction userInteraction) throws ApiException {

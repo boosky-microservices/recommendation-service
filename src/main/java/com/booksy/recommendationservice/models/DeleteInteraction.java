@@ -8,5 +8,6 @@ import lombok.*;
 @Setter
 @ToString
 public class DeleteInteraction implements Payload {
-    private String id;
+    private String bookId;
+    private String userId;
 }
