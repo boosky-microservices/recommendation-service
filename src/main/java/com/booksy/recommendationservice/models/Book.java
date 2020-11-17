@@ -20,4 +20,7 @@ public class Book {
     private Set<String> categories;
     private String thumbnail;
     private String publishedDate;
+
+
 }
+
