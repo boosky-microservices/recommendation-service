@@ -7,8 +7,6 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-public class Event<T extends Payload> {
-    private String type;
-    private String date;
-    private T payload;
+public class DeleteInteraction implements Payload {
+    private String id;
 }
