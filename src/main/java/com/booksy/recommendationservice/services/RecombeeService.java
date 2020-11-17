@@ -2,6 +2,7 @@ package com.booksy.recommendationservice.services;
 
 import com.booksy.recommendationservice.models.Book;
 import com.booksy.recommendationservice.models.Event;
+import com.booksy.recommendationservice.models.Payload;
 import com.booksy.recommendationservice.models.UserInteraction;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recombee.api_client.RecombeeClient;
@@ -67,11 +68,16 @@ public class RecombeeService {
 
     }
 
-    @KafkaListener(topics = "ap8dmjx0-recommendation-events", groupId = "ap8dmjx0-consumers")
-    public void sendUserRatingInteraction(Event domainEvent) {
-        System.out.println(domainEvent.getDate());
-        System.out.println(domainEvent.getType());
+    public void sendUserRatingInteraction(UserInteraction userInteraction) {
+        System.out.println(userInteraction);
     }
 
+    @KafkaListener(topics = "ap8dmjx0-recommendation-events", groupId = "ap8dmjx0-consumers")
+    public void receiveEvent(Event<? extends Payload> domainEvent) {
+        Payload payload = domainEvent.getPayload();
+        if(payload instanceof UserInteraction) {
+            sendUserRatingInteraction((UserInteraction) payload);
+        }
+    }
 
 }

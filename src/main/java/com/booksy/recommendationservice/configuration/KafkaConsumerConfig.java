@@ -11,7 +11,6 @@ import org.springframework.kafka.config.KafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,19 +45,19 @@ public class KafkaConsumerConfig {
         props.put("sasl.mechanism", saslMechanism);
         props.put("sasl.jaas.config", saslJaasConfig);
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        props.put("value.deserializer", "org.springframework.kafka.support.serializer.JsonDeserializer");
+        props.put("value.deserializer", "com.booksy.recommendationservice.configuration.EventDeserializerKafka");
         return props;
     }
 
     @Bean
-    public ConsumerFactory<String, Event> consumerFactory() {
+    public ConsumerFactory<String, Event<?>> consumerFactory() {
         return new DefaultKafkaConsumerFactory<>(consumerConfigs(), new StringDeserializer(),
-                new JsonDeserializer<>(Event.class));
+                new EventDeserializer());
     }
 
     @Bean
-    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, Event>> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, Event> factory =
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, Event<?>>> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Event<?>> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
