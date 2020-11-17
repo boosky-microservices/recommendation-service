@@ -8,7 +8,8 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-public class UserInteraction implements Payload{
+public class UserInteraction implements Payload {
+
     private String userId;
     private String bookId;
     private String recommId;

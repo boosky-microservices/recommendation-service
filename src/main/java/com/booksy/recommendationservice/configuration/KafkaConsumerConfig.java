@@ -42,7 +42,7 @@ public class KafkaConsumerConfig {
         props.put("enable.auto.commit", "true");
         props.put("auto.commit.interval.ms", "1000");
         props.put("session.timeout.ms", "30000");
-        props.put("security.protocol", securityProtocol );
+        props.put("security.protocol", securityProtocol);
         props.put("sasl.mechanism", saslMechanism);
         props.put("sasl.jaas.config", saslJaasConfig);
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");

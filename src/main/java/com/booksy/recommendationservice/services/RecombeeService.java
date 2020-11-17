@@ -32,18 +32,18 @@ public class RecombeeService {
     private RecombeeClient recombeeClient;
 
     @PostConstruct
-    public void init(){
+    public void init() {
         recombeeClient = new RecombeeClient("booksy-api-dev", token);
     }
 
     public String sendBook(Book book) throws ApiException {
         addPropreties();
-       return recombeeClient.send(createItemValues(book));
+        return recombeeClient.send(createItemValues(book));
     }
 
-    public void addPropreties(){
+    public void addPropreties() {
         try {
-            recombeeClient.send(new Batch(new Request[] {new AddItemProperty("title", "string"),
+            recombeeClient.send(new Batch(new Request[]{new AddItemProperty("title", "string"),
                     new AddItemProperty("subtitle", "string"),
                     new AddItemProperty("publisher", "string"),
                     new AddItemProperty("description", "string"),
@@ -52,12 +52,12 @@ public class RecombeeService {
                     new AddItemProperty("categories", "set"),
                     new AddItemProperty("thumbnail", "image"),
                     new AddItemProperty("publishedDate", "string"),}));
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        }
+    }
 
-    public SetItemValues createItemValues(Book book){
+    public SetItemValues createItemValues(Book book) {
         String thumbnail = book.getThumbnail().equals("assets/img/no_book_cover.jpg") ? book.getThumbnail() : null;
         ObjectMapper oMapper = new ObjectMapper();
         Map<String, Object> booktMap = oMapper.convertValue(book, Map.class);
@@ -67,12 +67,11 @@ public class RecombeeService {
 
     }
 
-    @KafkaListener(topics="ap8dmjx0-recommendation-events", groupId = "ap8dmjx0-consumers")
-    public void sendUserRatingInteraction(Event domainEvent){
+    @KafkaListener(topics = "ap8dmjx0-recommendation-events", groupId = "ap8dmjx0-consumers")
+    public void sendUserRatingInteraction(Event domainEvent) {
         System.out.println(domainEvent.getDate());
         System.out.println(domainEvent.getType());
     }
-
 
 
 }

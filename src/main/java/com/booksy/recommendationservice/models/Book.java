@@ -10,7 +10,6 @@ import java.util.Set;
 @Getter
 @Setter
 public class Book {
-
     private String id;
     private String title;
     private String subtitle;
@@ -21,6 +20,4 @@ public class Book {
     private Set<String> categories;
     private String thumbnail;
     private String publishedDate;
-
-
 }

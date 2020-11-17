@@ -17,22 +17,18 @@ import org.springframework.web.bind.annotation.RestController;
 @AllArgsConstructor
 @RestController
 @RequestMapping("/api/v1/recommendation")
-public class RecombeeController{
+public class RecombeeController {
 
     private final RecombeeService recombeeService;
 
     @PostMapping
-    public ResponseEntity<String> postBook(@RequestBody Book book){
+    public ResponseEntity<String> postBook(@RequestBody Book book) {
         try {
-            System.err.println(book);
             String result = recombeeService.sendBook(book);
-            return new ResponseEntity<String>(result, HttpStatus.OK);
+            return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (ApiException e) {
             e.printStackTrace();
         }
         return new ResponseEntity<>("Internal error !", HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-
-
 }
