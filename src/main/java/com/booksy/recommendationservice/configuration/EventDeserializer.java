@@ -1,9 +1,9 @@
 package com.booksy.recommendationservice.configuration;
 
-import com.booksy.recommendationservice.models.Event;
-import com.booksy.recommendationservice.models.EventRegistry;
-import com.booksy.recommendationservice.models.EventTypes;
-import com.booksy.recommendationservice.models.Payload;
+import com.booksy.recommendationservice.events.Event;
+import com.booksy.recommendationservice.events.EventRegistry;
+import com.booksy.recommendationservice.events.EventTypes;
+import com.booksy.recommendationservice.events.Payload;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -19,7 +19,12 @@ public class EventDeserializer implements Deserializer<Event<?>> {
     public Event<? extends Payload> deserializes(JsonNode node) throws IOException {
         String type = node.get("type").asText();
         String date = node.get("date").asText();
-        Class<? extends Payload> payloadClass = EventRegistry.EVENT_NAME_TO_PAYLOAD.get(EventTypes.valueOf(type));
+        EventTypes foundEventType = null;
+        try{
+            foundEventType = EventTypes.valueOf(type);
+        } catch (IllegalArgumentException ignored) { }
+
+        Class<? extends Payload> payloadClass = EventRegistry.EVENT_NAME_TO_PAYLOAD.get(foundEventType);
         Payload payload = payloadClass != null ? new ObjectMapper().readValue(node.get("payload").traverse(), payloadClass) : null;
         return new Event<>(type, date, payload);
     }

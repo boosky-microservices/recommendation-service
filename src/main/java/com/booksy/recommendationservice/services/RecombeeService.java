@@ -1,7 +1,9 @@
 package com.booksy.recommendationservice.services;
 
+import com.booksy.recommendationservice.events.DeleteInteraction;
+import com.booksy.recommendationservice.events.ViewInteraction;
 import com.booksy.recommendationservice.models.Book;
-import com.booksy.recommendationservice.models.UserInteraction;
+import com.booksy.recommendationservice.events.UserInteraction;
 import com.booksy.recommendationservice.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recombee.api_client.RecombeeClient;
@@ -71,28 +73,33 @@ public class RecombeeService {
         return new SetItemValues(book.getId(), bookMap).setCascadeCreate(true);
     }
 
-    public void sendUserRatingInteraction(UserInteraction userInteraction) throws ApiException {
+    public void sendUserRatingInteraction(UserInteraction userInteraction) {
+        LOGGER.info("send user rating interaction event {}", userInteraction);
         double rating = userInteraction.getRating() / 2.5 - 1;
-        recombeeClient.send(new AddRating(userInteraction.getUserId(), userInteraction.getBookId(), rating)
-                .setCascadeCreate(true)
-                .setRecommId(userInteraction.getRecommId())
-        );
+        try {
+            recombeeClient.send(new AddRating(userInteraction.getUserId(), userInteraction.getBookId(), rating)
+                    .setCascadeCreate(true)
+                    .setRecommId(userInteraction.getRecommId())
+            );
+        } catch (ApiException ignored) { }
     }
 
     public void sendInBulk(List<Book> books) throws ApiException {
         recombeeClient.send(new Batch(books.stream().map(this::createItemValues).collect(Collectors.toList())));
     }
 
-    public void deleteRatingInteraction(DeleteInteraction deleteInteraction) {
+    public void deleteRatingInteraction(DeleteInteraction deleteInteraction)  {
+        LOGGER.info("send delete interaction event {}", deleteInteraction);
         try {
             recombeeClient.send(new DeleteBookmark(deleteInteraction.getUserId(), deleteInteraction.getBookId()));
-        } catch (ApiException e) {
-            LOGGER.error(e.getMessage());
-        }
+        } catch (ApiException ignored) { }
     }
 
-    public void sendViewInteraction(UserInteraction userInteraction) throws ApiException {
-        recombeeClient.send(new AddDetailView(userInteraction.getUserId(), userInteraction.getBookId()));
+    public void sendViewInteraction(ViewInteraction viewInteraction)  {
+        LOGGER.info("send view interaction event {}", viewInteraction);
+        try {
+            recombeeClient.send(new AddDetailView(viewInteraction.getUserId(), viewInteraction.getBookId()));
+        } catch (ApiException ignored) { }
     }
 
     public List<RecommendedBook> getRecommendedBooksFromBook(String bookId, String userId, int count) throws ApiException {

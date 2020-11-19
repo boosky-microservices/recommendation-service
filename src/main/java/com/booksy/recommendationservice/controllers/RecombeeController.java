@@ -1,17 +1,22 @@
 package com.booksy.recommendationservice.controllers;
 
 
+import com.booksy.recommendationservice.events.Event;
+import com.booksy.recommendationservice.events.EventHandler;
+import com.booksy.recommendationservice.events.Payload;
 import com.booksy.recommendationservice.models.*;
+import com.booksy.recommendationservice.services.EventHandlerRegistry;
 import com.booksy.recommendationservice.services.RecombeeService;
 import com.recombee.api_client.exceptions.ApiException;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @AllArgsConstructor
@@ -19,6 +24,9 @@ import java.util.List;
 @RequestMapping("/api/v1/recommendation")
 public class RecombeeController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RecombeeController.class);
+
+    private final EventHandlerRegistry eventHandlerRegistry;
     private final RecombeeService recombeeService;
 
     @GetMapping("/books")
@@ -31,13 +39,12 @@ public class RecombeeController {
     }
 
     @KafkaListener(topics = "ap8dmjx0-recommendation-events", groupId = "ap8dmjx0-consumers")
-    public void receiveEvent(Event<? extends Payload> domainEvent) throws ApiException {
+    public void receiveEvent(Event<? extends Payload> domainEvent) {
         Payload payload = domainEvent.getPayload();
         String eventType = domainEvent.getType();
-        if (eventType.equals(EventTypes.UPDATE_BOOK_RATING.toString())) {
-            recombeeService.sendUserRatingInteraction((UserInteraction) payload);
-        }else if(eventType.equals(EventTypes.DELETE_BOOK_RATING.toString())) {
-            recombeeService.deleteRatingInteraction((DeleteInteraction) payload);
+        EventHandler eventHandler = eventHandlerRegistry.getEventHandler(eventType);
+        if(eventHandler != null) {
+            eventHandler.handleEvent(payload);
         }
     }
 }

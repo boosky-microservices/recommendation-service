@@ -1,6 +1,6 @@
 package com.booksy.recommendationservice.configuration;
 
-import com.booksy.recommendationservice.models.Event;
+import com.booksy.recommendationservice.events.Event;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
