@@ -1,9 +1,7 @@
 package com.booksy.recommendationservice.services;
 
-import com.booksy.recommendationservice.events.DeleteInteraction;
-import com.booksy.recommendationservice.events.ViewInteraction;
+import com.booksy.recommendationservice.events.payloads.*;
 import com.booksy.recommendationservice.models.Book;
-import com.booksy.recommendationservice.events.UserInteraction;
 import com.booksy.recommendationservice.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recombee.api_client.RecombeeClient;
@@ -41,36 +39,23 @@ public class RecombeeService {
         recombeeClient = new RecombeeClient("booksy-api-dev", token);
     }
 
-    public String sendBook(Book book) throws ApiException {
+    public void sendBook(SendBookInteraction bookInteraction) {
+        LOGGER.info("send book item value event {}", bookInteraction);
         addProperties();
-        return recombeeClient.send(createItemValues(book));
-    }
-
-    private void addProperties() {
         try {
-            recombeeClient.send(new Batch(new Request[]{
-                    new AddItemProperty("title", "string"),
-                    new AddItemProperty("subtitle", "string"),
-                    new AddItemProperty("publisher", "string"),
-                    new AddItemProperty("description", "string"),
-                    new AddItemProperty("pageCount", "int"),
-                    new AddItemProperty("authors", "set"),
-                    new AddItemProperty("categories", "set"),
-                    new AddItemProperty("thumbnail", "image"),
-                    new AddItemProperty("publishedDate", "string"),
-            }));
-        } catch (Exception e) {
+            recombeeClient.send(createItemValues(bookInteraction));
+        } catch (ApiException e) {
             LOGGER.error(e.getMessage());
         }
     }
 
-    private SetItemValues createItemValues(Book book) {
-        String thumbnail = book.getThumbnail().equals("assets/img/no_book_cover.jpg") ? book.getThumbnail() : null;
-        book.setThumbnail(thumbnail);
-        ObjectMapper oMapper = new ObjectMapper();
-        Map<String, Object> bookMap = oMapper.convertValue(book, Map.class);
-        bookMap.remove("id");
-        return new SetItemValues(book.getId(), bookMap).setCascadeCreate(true);
+    public void sendInBulk(SendBulkInteraction bulkInteraction) {
+        LOGGER.info("send bulk book event, {} books sent", bulkInteraction.getBooks().size());
+        try {
+            recombeeClient.send(new Batch(bulkInteraction.getBooks().stream().map(this::createItemValues).collect(Collectors.toList())));
+        } catch (ApiException e) {
+            LOGGER.error(e.getMessage());
+        }
     }
 
     public void sendUserRatingInteraction(UserInteraction userInteraction) {
@@ -81,11 +66,9 @@ public class RecombeeService {
                     .setCascadeCreate(true)
                     .setRecommId(userInteraction.getRecommId())
             );
-        } catch (ApiException ignored) { }
-    }
-
-    public void sendInBulk(List<Book> books) throws ApiException {
-        recombeeClient.send(new Batch(books.stream().map(this::createItemValues).collect(Collectors.toList())));
+        } catch (ApiException e) {
+            LOGGER.error(e.getMessage());
+        }
     }
 
     public void deleteRatingInteraction(DeleteInteraction deleteInteraction)  {
@@ -115,5 +98,33 @@ public class RecombeeService {
 
     public void mergeUsers(String targetUserId, String sourceUserId) throws ApiException {
         recombeeClient.send(new MergeUsers(targetUserId, sourceUserId).setCascadeCreate(true));
+    }
+
+    private void addProperties() {
+        try {
+            recombeeClient.send(new Batch(new Request[]{
+                    new AddItemProperty("title", "string"),
+                    new AddItemProperty("subtitle", "string"),
+                    new AddItemProperty("publisher", "string"),
+                    new AddItemProperty("description", "string"),
+                    new AddItemProperty("pageCount", "int"),
+                    new AddItemProperty("authors", "set"),
+                    new AddItemProperty("categories", "set"),
+                    new AddItemProperty("thumbnail", "image"),
+                    new AddItemProperty("publishedDate", "string"),
+            }));
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    private SetItemValues createItemValues(RecommendedBook recommendedBook) {
+        Book book = recommendedBook.getVolumeInfo();
+        String thumbnail = book.getThumbnail().equals("assets/img/no_book_cover.jpg") ? book.getThumbnail() : null;
+        book.setThumbnail(thumbnail);
+        ObjectMapper oMapper = new ObjectMapper();
+        Map<String, Object> bookMap = oMapper.convertValue(book, Map.class);
+        bookMap.remove("id");
+        return new SetItemValues(recommendedBook.getId(), bookMap).setCascadeCreate(true);
     }
 }

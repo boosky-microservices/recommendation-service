@@ -3,7 +3,7 @@ package com.booksy.recommendationservice.configuration;
 import com.booksy.recommendationservice.events.Event;
 import com.booksy.recommendationservice.events.EventRegistry;
 import com.booksy.recommendationservice.events.EventTypes;
-import com.booksy.recommendationservice.events.Payload;
+import com.booksy.recommendationservice.events.payloads.Payload;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;

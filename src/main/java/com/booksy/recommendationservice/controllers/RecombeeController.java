@@ -3,7 +3,7 @@ package com.booksy.recommendationservice.controllers;
 
 import com.booksy.recommendationservice.events.Event;
 import com.booksy.recommendationservice.events.EventHandler;
-import com.booksy.recommendationservice.events.Payload;
+import com.booksy.recommendationservice.events.payloads.Payload;
 import com.booksy.recommendationservice.models.*;
 import com.booksy.recommendationservice.services.EventHandlerRegistry;
 import com.booksy.recommendationservice.services.RecombeeService;
@@ -40,6 +40,7 @@ public class RecombeeController {
 
     @KafkaListener(topics = "ap8dmjx0-recommendation-events", groupId = "ap8dmjx0-consumers")
     public void receiveEvent(Event<? extends Payload> domainEvent) {
+        LOGGER.info("receive {} event {}", domainEvent.getType(), domainEvent);
         Payload payload = domainEvent.getPayload();
         String eventType = domainEvent.getType();
         EventHandler eventHandler = eventHandlerRegistry.getEventHandler(eventType);

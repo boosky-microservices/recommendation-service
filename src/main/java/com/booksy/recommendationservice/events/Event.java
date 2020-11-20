@@ -1,5 +1,6 @@
 package com.booksy.recommendationservice.events;
 
+import com.booksy.recommendationservice.events.payloads.Payload;
 import lombok.*;
 
 @AllArgsConstructor

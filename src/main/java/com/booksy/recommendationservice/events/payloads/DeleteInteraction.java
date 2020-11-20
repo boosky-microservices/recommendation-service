@@ -1,4 +1,4 @@
-package com.booksy.recommendationservice.events;
+package com.booksy.recommendationservice.events.payloads;
 
 import lombok.*;
 
