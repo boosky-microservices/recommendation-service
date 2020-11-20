@@ -20,7 +20,7 @@ jobs:
       - name: Save jar artifact
         uses: actions/upload-artifact@v2
         with:
-          name: bundle-${{ GITHUB_RUN_ID }}
+          name: bundle-${GITHUB_RUN_ID}
           path: ./target/recommendation-service-0.0.1-SNAPSHOT.jar
   deploy:
     needs: [build]
@@ -30,7 +30,7 @@ jobs:
       - name: Download jar artifact
         uses: actions/download-artifact@v2
         with:
-          name: bundle-${{ GITHUB_RUN_ID }}
+          name: bundle-${GITHUB_RUN_ID}
       - name: Install aws cli and deploy
         run: pip install awscli
       - run: aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
