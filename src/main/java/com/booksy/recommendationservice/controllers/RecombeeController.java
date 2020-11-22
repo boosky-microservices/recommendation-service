@@ -21,7 +21,6 @@ import java.util.List;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/v1/recommendation")
 public class RecombeeController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RecombeeController.class);
