@@ -17,6 +17,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @AllArgsConstructor
@@ -28,10 +29,19 @@ public class RecombeeController {
     private final EventHandlerRegistry eventHandlerRegistry;
     private final RecombeeService recombeeService;
 
+
+    @GetMapping("/")
+    public ResponseEntity<List<RecommendedBook>> getRecommendedBooks(
+            @AuthenticationPrincipal Jwt jwt
+    ) throws ApiException {
+        String userId = jwt != null && jwt.getClaim("sub") != null ? jwt.getClaim("sub").toString().split("\\|")[1] : "noid";
+        return new ResponseEntity<>(recombeeService.getRecommendedBooks(userId, 18), HttpStatus.OK);
+    }
+
     @GetMapping("/books")
-    public ResponseEntity<List<RecommendedBook>> getRecommendedBooks(@AuthenticationPrincipal Jwt jwt,
-                                                                     @RequestParam String bookId,
-                                                                     @RequestParam int count
+    public ResponseEntity<List<RecommendedBook>> getRecommendedBooksFromBook(@AuthenticationPrincipal Jwt jwt,
+                                                                             @RequestParam String bookId,
+                                                                             @RequestParam int count
     ) throws ApiException {
         String userId = jwt != null && jwt.getClaim("sub") != null ? jwt.getClaim("sub").toString().split("\\|")[1] : "noid";
         return new ResponseEntity<>(recombeeService.getRecommendedBooksFromBook(bookId, userId, count), HttpStatus.OK);
@@ -43,7 +53,7 @@ public class RecombeeController {
         Payload payload = domainEvent.getPayload();
         String eventType = domainEvent.getType();
         EventHandler eventHandler = eventHandlerRegistry.getEventHandler(eventType);
-        if(eventHandler != null) {
+        if (eventHandler != null) {
             eventHandler.handleEvent(payload);
         }
     }

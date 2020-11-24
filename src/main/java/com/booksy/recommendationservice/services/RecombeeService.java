@@ -85,6 +85,17 @@ public class RecombeeService {
         } catch (ApiException ignored) { }
     }
 
+    public List<RecommendedBook> getRecommendedBooks(String userId, int count) throws ApiException {
+        List<RecommendedBook> recommendedBooks = new ArrayList<>();
+        final ObjectMapper mapper = new ObjectMapper();
+        RecommendationResponse recommendations = recombeeClient.send(new RecommendItemsToUser(userId, count).setCascadeCreate(true).setReturnProperties(true));
+        recommendations.forEach(recommendation -> {
+            Book book = mapper.convertValue(recommendation.getValues(), Book.class);
+            recommendedBooks.add(new RecommendedBook(recommendation.getId(), book));
+        });
+        return recommendedBooks;
+    }
+
     public List<RecommendedBook> getRecommendedBooksFromBook(String bookId, String userId, int count) throws ApiException {
         List<RecommendedBook> recommendedBooks = new ArrayList<>();
         final ObjectMapper mapper = new ObjectMapper();
